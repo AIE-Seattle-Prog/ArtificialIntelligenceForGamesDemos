@@ -13,6 +13,9 @@ public class BasicAIController : MonoBehaviour
 
     public LayerMask worldMask;
 
+    private Collider[] overlapResults = new Collider[32];
+    private int overlapCount;
+
     private void Update()
     {
         // waypoint logic
@@ -68,16 +71,14 @@ public class BasicAIController : MonoBehaviour
         //
         if(!crouchedThisFrame && motor.CrouchWish)
         {
-            // TODO: always use standing dimensions here for Overlap
             HumanoidMotor.GetCapsulePoints(motor.StandHeight, motor.col.radius,
             out top, out _, out bottom);
             top = motor.transform.TransformPoint(top);
             bottom = motor.transform.TransformPoint(bottom);
 
-            // TODO: replace with OverlapCapsuleNonAlloc or go back to CheckCapsule
-            var overlaps = Physics.OverlapCapsule(top, bottom, motor.col.radius * 0.95f, worldMask);
+            overlapCount = Physics.OverlapCapsuleNonAlloc(top, bottom, motor.col.radius * 0.95f, overlapResults, worldMask);
             // nothing in the way?
-            if (overlaps.Length == 0)
+            if (overlapCount == 0)
             {
                 motor.CrouchWish = false;
             }
