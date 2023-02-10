@@ -15,6 +15,13 @@ public class BasicAIController : MonoBehaviour
     /// </summary>
     private float crouchTimer;
 
+    [Header("Steering")]
+    public float seekStrength = 2.0f;
+    [Space]
+    public float wanderStrength = 3.0f;
+    public float wanderRadius = 2.5f;
+    public float wanderJitter = 0.5f;
+
     [Header("Waypoints")]
     /// <summary>
     /// A series of waypoints that the character will walk through. Will loop back to
@@ -27,14 +34,26 @@ public class BasicAIController : MonoBehaviour
     private int currentWaypoint;
 
     /// <summary>
-    /// 
+    /// Distance at which a waypoint will be considered "reached" before moving
+    /// to the next waypoint
     /// </summary>
     public float waypointThreshold = 0.3f;
 
     [Header("Sweep")]
+    /// <summary>
+    /// Mask applied when doing any physics queries relating to the motor
+    /// </summary>
     public LayerMask worldMask;
 
+    /// <summary>
+    /// Intermediary buffer for retaining the results of various overlap tests.
+    /// <br></br>
+    /// Refer to 'overlapCount' to determine how many entries to check.
+    /// </summary>
     private Collider[] overlapResults = new Collider[32];
+    /// <summary>
+    /// The number of colliders present in 'overlapResults'.
+    /// </summary>
     private int overlapCount;
 
     private void Update()
@@ -47,19 +66,27 @@ public class BasicAIController : MonoBehaviour
 
         Vector3 offset = dstPos - curPos;
 
+        // check if waypoint was reached
         if(offset.sqrMagnitude < waypointThreshold * waypointThreshold)
         {
             ++currentWaypoint;
             currentWaypoint %= waypoints.Length;
 
             dstPos = waypoints[currentWaypoint].position;
-            offset = dstPos - curPos;
         }
 
-        offset = Vector3.ClampMagnitude(offset, 1.0f);
-
         // apply desired input
-        motor.MoveWish = offset;
+        Vector3 seekForce = SteeringMethods.Seek(curPos, dstPos, motor.MoveWish, 1.0f);
+        Vector3 wanderForce = SteeringMethods.Wander(curPos, wanderRadius, wanderJitter, motor.MoveWish, 1.0f);
+        wanderForce.y = 0.0f;
+        wanderForce.Normalize(); // HACK: wander assumes 3D, but ground movement only occurs in 2D (relative to ground plane)
+
+        // apply forces
+        motor.MoveWish += seekForce * (seekStrength * Time.deltaTime);
+        motor.MoveWish += wanderForce * (wanderStrength * Time.deltaTime);
+
+        // normalize (MoveWish expects a magnitude of 1)
+        motor.MoveWish.Normalize();
 
         //
         // check if movement will be blocked

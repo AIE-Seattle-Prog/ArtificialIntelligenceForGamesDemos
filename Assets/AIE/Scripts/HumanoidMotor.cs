@@ -75,6 +75,6 @@ public class HumanoidMotor : MonoBehaviour
         ResizeHeight(CrouchWish ? CrouchHeight : StandHeight);
 
         // apply movement
-        rbody.MovePosition(rbody.position + delta * Time.deltaTime);
+        rbody.velocity = delta;
     }
 }
