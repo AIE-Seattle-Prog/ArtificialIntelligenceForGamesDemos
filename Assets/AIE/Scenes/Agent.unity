@@ -500,7 +500,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &960070804
 Transform:
   m_ObjectHideFlags: 0
@@ -843,12 +843,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   motor: {fileID: 1479133971}
+  crouchMinTime: 0.1
   waypoints:
   - {fileID: 2094310467}
   - {fileID: 1322351917}
   - {fileID: 73180595}
   - {fileID: 353774049}
-  threshold: 0.3
+  waypointThreshold: 0.3
   worldMask:
     serializedVersion: 2
     m_Bits: 1
@@ -864,13 +865,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcb0388de2e278c4f8218a210649851f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MoveWish: {x: 0, y: 0, z: 0}
-  CrouchWish: 0
-  MoveSpeed: 3
-  StandHeight: 2
-  CrouchHeight: 1.25
   <rbody>k__BackingField: {fileID: 1479133972}
   <col>k__BackingField: {fileID: 1479133973}
+  MoveWish: {x: 0, y: 0, z: 0}
+  CrouchWish: 0
+  MoveSpeed: 8
+  CrouchSpeed: 6
+  StandHeight: 2
+  CrouchHeight: 1.25
 --- !u!54 &1479133972
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -889,7 +891,7 @@ Rigidbody:
   m_CollisionDetection: 0
 --- !u!136 &1479133973
 CapsuleCollider:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 8
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -995,13 +997,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcb0388de2e278c4f8218a210649851f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <rbody>k__BackingField: {fileID: 0}
+  <col>k__BackingField: {fileID: 0}
   MoveWish: {x: 0, y: 0, z: 0}
   CrouchWish: 0
   MoveSpeed: 8
+  CrouchSpeed: 6
   StandHeight: 2
   CrouchHeight: 1.25
-  <rbody>k__BackingField: {fileID: 0}
-  <col>k__BackingField: {fileID: 0}
 --- !u!114 &1855592286
 MonoBehaviour:
   m_ObjectHideFlags: 0
