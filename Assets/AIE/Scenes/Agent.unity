@@ -844,8 +844,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   motor: {fileID: 1479133971}
   crouchMinTime: 0.1
-  seekStrength: 2
-  wanderStrength: 1
+  seekStrength: 4
+  wanderStrength: 2
   wanderRadius: 2.5
   wanderJitter: 0.5
   waypoints:
@@ -873,8 +873,8 @@ MonoBehaviour:
   <col>k__BackingField: {fileID: 1479133973}
   MoveWish: {x: 0, y: 0, z: 0}
   CrouchWish: 0
-  MoveSpeed: 2
-  CrouchSpeed: 1
+  MoveSpeed: 8
+  CrouchSpeed: 4
   StandHeight: 2
   CrouchHeight: 1.25
 --- !u!54 &1479133972
