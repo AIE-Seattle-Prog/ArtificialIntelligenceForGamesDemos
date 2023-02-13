@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,11 +23,11 @@ public class BasicAIController : MonoBehaviour
     public float wanderRadius = 2.5f;
     public float wanderJitter = 0.5f;
 
-    [Header("Waypoints")]
     /// <summary>
     /// A series of waypoints that the character will walk through. Will loop back to
     /// beginning after reaching the last one.
     /// </summary>
+    [Header("Waypoints")]
     public Transform[] waypoints;
     /// <summary>
     /// An index denoting which waypoint we are currently pathing to.
@@ -39,10 +40,10 @@ public class BasicAIController : MonoBehaviour
     /// </summary>
     public float waypointThreshold = 0.3f;
 
-    [Header("Sweep")]
     /// <summary>
     /// Mask applied when doing any physics queries relating to the motor
     /// </summary>
+    [Header("Sweep")]
     public LayerMask worldMask;
 
     /// <summary>
@@ -97,6 +98,7 @@ public class BasicAIController : MonoBehaviour
         bottom = motor.transform.TransformPoint(bottom);
 
         bool isBlocked = Physics.CapsuleCast(top, bottom, motor.col.radius * 0.95f, offset.normalized, motor.MoveSpeed * Time.deltaTime);
+        isBlocked = motor.Cast(offset.normalized, motor.MoveSpeed * Time.deltaTime, out _, worldMask);
         // don't evaluate crouch-bypass if already crouched and blocked
         if(isBlocked && !motor.CrouchWish)
         {
@@ -111,6 +113,7 @@ public class BasicAIController : MonoBehaviour
                 motor.col.radius,
                 offset.normalized,
                 motor.MoveSpeed * Time.deltaTime);
+            
             motor.CrouchWish = shouldCrouch;
             crouchedThisFrame = shouldCrouch;
             crouchTimer = crouchMinTime;
@@ -136,6 +139,18 @@ public class BasicAIController : MonoBehaviour
                     motor.CrouchWish = false;
                 }
             }
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.green;
+
+        if (waypoints.Length > 0)
+        {
+            HumanoidMotor.GetCapsulePoints(motor.col.height, motor.col.radius, out var top, out _, out _);
+            Vector3 topWorld = transform.TransformPoint(top);
+            Gizmos.DrawLine(topWorld, waypoints[currentWaypoint].position);
         }
     }
 }
