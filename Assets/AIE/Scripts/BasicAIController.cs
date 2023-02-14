@@ -41,21 +41,15 @@ public class BasicAIController : MonoBehaviour
     public float waypointThreshold = 0.3f;
 
     /// <summary>
-    /// Mask applied when doing any physics queries relating to the motor
-    /// </summary>
-    [Header("Sweep")]
-    public LayerMask worldMask;
-
-    /// <summary>
     /// Intermediary buffer for retaining the results of various overlap tests.
     /// <br></br>
     /// Refer to 'overlapCount' to determine how many entries to check.
     /// </summary>
-    private Collider[] overlapResults = new Collider[32];
+    private Collider[] cacheOverlapResults = new Collider[32];
     /// <summary>
     /// The number of colliders present in 'overlapResults'.
     /// </summary>
-    private int overlapCount;
+    private int cacheOverlapCount;
 
     private void Update()
     {
@@ -92,27 +86,19 @@ public class BasicAIController : MonoBehaviour
         //
         // check if movement will be blocked
         //
-        HumanoidMotor.GetCapsulePoints(motor.col.height, motor.col.radius,
-            out var top, out _, out var bottom);
-        top = motor.transform.TransformPoint(top);
-        bottom = motor.transform.TransformPoint(bottom);
-
-        bool isBlocked = Physics.CapsuleCast(top, bottom, motor.col.radius * 0.95f, offset.normalized, motor.MoveSpeed * Time.deltaTime);
-        isBlocked = motor.Cast(offset.normalized, motor.MoveSpeed * Time.deltaTime, out _, worldMask);
+        bool isBlocked = motor.Cast(motor.MoveWish, motor.MoveSpeed * Time.deltaTime, out var hit, motor.worldMask);
+        
         // don't evaluate crouch-bypass if already crouched and blocked
-        if(isBlocked && !motor.CrouchWish)
+        if(isBlocked &&
+           hit.normal.y < 0.65f &&  // assumes that anything w/ a high Y-value is not ground
+           !motor.CrouchWish)
         {
-            HumanoidMotor.GetCapsulePoints(motor.CrouchHeight, motor.col.radius,
-            out top, out _, out bottom);
-
-            top = motor.transform.TransformPoint(top);
-            bottom = motor.transform.TransformPoint(bottom);
-
             // determine if crouching will help bypass obstacle
-            bool shouldCrouch = !Physics.CapsuleCast(top, bottom,
+            bool shouldCrouch = !motor.Cast(curPos, motor.CrouchHeight,
                 motor.col.radius,
-                offset.normalized,
-                motor.MoveSpeed * Time.deltaTime);
+                motor.MoveWish,
+                motor.MoveSpeed * Time.deltaTime,
+                out _);
             
             motor.CrouchWish = shouldCrouch;
             crouchedThisFrame = shouldCrouch;
@@ -128,13 +114,13 @@ public class BasicAIController : MonoBehaviour
             if (crouchTimer < 0)
             {
                 HumanoidMotor.GetCapsulePoints(motor.StandHeight, motor.col.radius,
-                out top, out _, out bottom);
+                out var top, out _, out var bottom);
                 top = motor.transform.TransformPoint(top);
                 bottom = motor.transform.TransformPoint(bottom);
 
-                overlapCount = Physics.OverlapCapsuleNonAlloc(top, bottom, motor.col.radius * 0.95f, overlapResults, worldMask);
+                cacheOverlapCount = Physics.OverlapCapsuleNonAlloc(top, bottom, motor.col.radius - motor.skinWidth, cacheOverlapResults, motor.worldMask);
                 // nothing in the way?
-                if (overlapCount == 0)
+                if (cacheOverlapCount == 0)
                 {
                     motor.CrouchWish = false;
                 }
@@ -150,7 +136,8 @@ public class BasicAIController : MonoBehaviour
         {
             HumanoidMotor.GetCapsulePoints(motor.col.height, motor.col.radius, out var top, out _, out _);
             Vector3 topWorld = transform.TransformPoint(top);
-            Gizmos.DrawLine(topWorld, waypoints[currentWaypoint].position);
+            Vector3 offset = topWorld - transform.position;
+            Gizmos.DrawLine(topWorld, waypoints[currentWaypoint].position + offset);
         }
     }
 }
