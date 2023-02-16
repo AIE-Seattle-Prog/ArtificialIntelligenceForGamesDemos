@@ -184,7 +184,7 @@ public class HumanoidMotor : MonoBehaviour
 
         // update rotation
         Vector3 lookDirection = new Vector3(rbody.velocity.x, 0.0f, rbody.velocity.z);
-        if (rbody.velocity.sqrMagnitude > 0.0f)
+        if (lookDirection.sqrMagnitude > 0.0f)
         {
             rbody.rotation = Quaternion.LookRotation(lookDirection, Vector3.up);
         }
@@ -213,6 +213,7 @@ public class HumanoidMotor : MonoBehaviour
     {
         rbody = GetComponent<Rigidbody>();
         col = GetComponent<CapsuleCollider>();
+        col.hideFlags |= HideFlags.NotEditable;
         anim = GetComponentInChildren<Animator>();
     }
 }

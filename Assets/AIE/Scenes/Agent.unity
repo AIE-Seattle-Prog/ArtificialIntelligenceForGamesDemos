@@ -1472,18 +1472,18 @@ MonoBehaviour:
   <rbody>k__BackingField: {fileID: 1479133972}
   <col>k__BackingField: {fileID: 1479133973}
   isGrounded: 0
-  groundSearchDistance: 0.01
-  skinWidth: 0.05
   worldMask:
     serializedVersion: 2
     m_Bits: 1
   maxGroundAngle: 60
   MoveWish: {x: 0, y: 0, z: 0}
   CrouchWish: 0
+  skinWidth: 0.05
   MoveSpeed: 8
   CrouchSpeed: 4
   StandHeight: 2
   CrouchHeight: 1.25
+  groundSearchDistance: 0.01
   <anim>k__BackingField: {fileID: 184283537}
 --- !u!54 &1479133972
 Rigidbody:
@@ -1503,7 +1503,7 @@ Rigidbody:
   m_CollisionDetection: 2
 --- !u!136 &1479133973
 CapsuleCollider:
-  m_ObjectHideFlags: 8
+  m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -1966,18 +1966,18 @@ MonoBehaviour:
   <rbody>k__BackingField: {fileID: 0}
   <col>k__BackingField: {fileID: 0}
   isGrounded: 0
-  groundSearchDistance: 0.01
-  skinWidth: 0.05
   worldMask:
     serializedVersion: 2
     m_Bits: 0
   maxGroundAngle: 60
   MoveWish: {x: 0, y: 0, z: 0}
   CrouchWish: 0
+  skinWidth: 0.05
   MoveSpeed: 8
   CrouchSpeed: 6
   StandHeight: 2
   CrouchHeight: 1.25
+  groundSearchDistance: 0.01
   <anim>k__BackingField: {fileID: 0}
 --- !u!114 &1855592286
 MonoBehaviour:
