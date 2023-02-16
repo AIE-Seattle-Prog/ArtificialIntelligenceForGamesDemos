@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[SelectionBase]
 public class Tile : MonoBehaviour
 {
     public List<Tile> connections = new List<Tile>();
@@ -9,12 +10,13 @@ public class Tile : MonoBehaviour
     public int id;
     public NavGrid tileset;
 
-    public Vector3Int gridPosition
+    public Vector3Int GridPosition
     {
         get
         {
             int y = id / tileset.dimensions.x * tileset.dimensions.z;
             int layerLocalId = id - y * tileset.dimensions.x * tileset.dimensions.z;
+
             int x = layerLocalId % tileset.dimensions.x;
             int z = layerLocalId / tileset.dimensions.z;
 

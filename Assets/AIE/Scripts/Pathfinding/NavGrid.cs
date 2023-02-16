@@ -7,13 +7,15 @@ public class NavGrid : MonoBehaviour
 {
     public GameObject tilePrefab;
     public Vector3Int dimensions = new Vector3Int(3,1,3);
-    public int tileCount { get { return dimensions.x * dimensions.y * dimensions.z; } }
+    public int TileCount { get { return dimensions.x * dimensions.y * dimensions.z; } }
 
     // row-major storage of tiles
     Tile[] tiles;
 
-    // get world-space dimensions of tile
-    public Vector3 tileDimensions
+    /// <summary>
+    /// A Vector3 returning the half-dimensions of the collider
+    /// </summary>
+    public Vector3 TileHalfDimensions
     {
         get
         {
@@ -22,7 +24,9 @@ public class NavGrid : MonoBehaviour
         }
     }
 
+    //
     // 1D-style accessor
+    //
 
     // Get tile on a 1D row-major fashion in grid-space
     public Tile GetTile(int idx)
@@ -30,7 +34,9 @@ public class NavGrid : MonoBehaviour
         return tiles[idx];
     }
 
+    //
     // 2D-style accessors
+    //
 
     // Get tile on a 2D grid (with layer specifying verticality) in grid-space
     public Tile GetTile2D(int idx, int idz, int layer=0)
@@ -44,10 +50,12 @@ public class NavGrid : MonoBehaviour
         return GetTile2D(idx.x, idx.z, idx.y);
     }
 
-    // 3D-style accessor
+    //
+    // 3D-style accessors
+    //
 
     // Get tile on a 3D grid in grid-space
-    public Tile GetTile(int idx, int idy, int idz)
+    public Tile GetTile3D(int idx, int idy, int idz)
     {
         return GetTile(dimensions.x * dimensions.z * idy + idx + dimensions.x * idz);
     }
@@ -67,7 +75,7 @@ public class NavGrid : MonoBehaviour
 
     private void Start()
     {
-        Vector3 tileDim = tileDimensions;
+        Vector3 tileDim = TileHalfDimensions;
 
         tiles = new Tile[dimensions.x * dimensions.y * dimensions.z];
 
@@ -79,17 +87,24 @@ public class NavGrid : MonoBehaviour
             // col
             for (int j = 0; j < dimensions.x; ++j)
             {
-                var babyTile = Instantiate<Transform>(tilePrefab.transform);
-
+                // spawn and set position
+                var babyTile = Instantiate(tilePrefab.gameObject);
                 babyTile.transform.position = new Vector3(j * tileDim.x * 2, 0, i * tileDim.z * 2);
 
-                var tileActually = babyTile.GetComponent<Tile>();
+                // calculate ID no. for 1-D array storage
                 int id1d = i * dimensions.x + j;
+
+                // populate tile data
+                var tileActually = babyTile.GetComponent<Tile>();
                 tiles[id1d] = tileActually;
+
                 tileActually.tileset = this;
                 tileActually.id = id1d;
+                tileActually.name = $"Tile {tileActually.id}";
             }
         }
+
+        if(dimensions.y != 1) { Debug.LogWarning("Layering not yet possible"); }
 
         // MAKE CONNECTIONS
 
@@ -129,8 +144,8 @@ public class NavGrid : MonoBehaviour
     private class TileRecord : IComparable<TileRecord>
     {
         public Tile tile;
-        public float distance = Mathf.Infinity;
 
+        public float distance = Mathf.Infinity;
         public TileRecord prev;
 
         public TileRecord(Tile tile) { this.tile = tile; }
@@ -141,52 +156,78 @@ public class NavGrid : MonoBehaviour
         }
     }
 
-    public bool CalculatePath(Vector3 start, Vector3 end, List<Vector3> path)
+    /// <summary>
+    /// Given two world-space positions, plots a path between them if possible.
+    /// </summary>
+    /// <param name="worldStart">Starting world-space position.</param>
+    /// <param name="worldEnd">Ending world-space position.</param>
+    /// <param name="path">To be populated with the path, if possible. Must be non-null.</param>
+    /// <returns>True if possible, otherwise false.</returns>
+    public bool CalculatePath(Vector3 worldStart, Vector3 worldEnd, List<Vector3> path)
     {
-        Vector3Int startInt = GetNearestCellOnGrid(start);
-        Vector3Int endInt = GetNearestCellOnGrid(end);
+        Vector3Int startInt = GetNearestCellOnGrid(worldStart);
+        Vector3Int endInt = GetNearestCellOnGrid(worldEnd);
 
         return CalculatePath(startInt, endInt, path);
     }
 
-    public bool CalculatePath(Vector3Int start, Vector3Int end, List<Vector3> path)
+    /// <summary>
+    /// Given two grid positions, plots a path between them if possible.
+    /// </summary>
+    /// <param name="gridStart">Starting grid position.</param>
+    /// <param name="gridEnd">Ending grid position.</param>
+    /// <param name="path">To be populated with the path, if possible. Must be non-null.</param>
+    /// <returns>True if possible, otherwise false.</returns>
+    public bool CalculatePath(Vector3Int gridStart, Vector3Int gridEnd, List<Vector3> path)
     {
         // create copies of each tile w/ metadata for pathfinding purposes
-        TileRecord[] allTiles = new TileRecord[tileCount];
-        List<TileRecord> openList = new List<TileRecord>();
-        for (int i = 0; i < tileCount; ++i)
+        TileRecord[] records = new TileRecord[TileCount];
+        for (int i = 0; i < TileCount; ++i)
         {
-            allTiles[i] = new TileRecord(GetTile(i));
-            openList.Add(allTiles[i]);
+            records[i] = new TileRecord(GetTile(i));
         }
 
-        TileRecord currentTile = allTiles[GetTile2D(start).id];
-        currentTile.distance = 0;
-        TileRecord goalTile = allTiles[GetTile2D(end).id];
+        List<TileRecord> openList = new();
+        HashSet<TileRecord> closedList = new();
 
         // TBD: allow variable move cost
         const int moveCost = 1;
 
+        records[GetTile2D(gridStart).id].distance = 0.0f;
+        openList.Add(records[GetTile2D(gridStart).id]);
+
+        TileRecord goalTile = records[GetTile2D(gridEnd).id];
         bool goalReached = false;
         while (openList.Count > 0)
         {
-            openList.Sort();
-            currentTile = openList[0];
+            TileRecord currentTile = openList[0];
+            // remove current tile from unvisited list
+            openList.Remove(currentTile);
+            closedList.Add(currentTile);
 
             // calculate new distance for all tiles
             foreach (var connection in currentTile.tile.connections)
             {
+                // skip tiles that are already evaluated
+                if(closedList.Contains(records[connection.id])) { continue; }
+
                 float tentativeDist = currentTile.distance + moveCost;
-                if (allTiles[connection.id].distance > tentativeDist)
+                if (records[connection.id].distance > tentativeDist)
                 {
-                    allTiles[connection.id].distance = tentativeDist;
-                    allTiles[connection.id].prev = currentTile;
+                    records[connection.id].distance = tentativeDist;
+                    records[connection.id].prev = currentTile;
+                    openList.Sort();
+                }
+
+                // add to open list if not already added
+                if (!openList.Contains(records[connection.id]))
+                {
+                    openList.Add(records[connection.id]);
+                    openList.Sort();
                 }
             }
 
-            // remove current tile from unvisited list
-            openList.RemoveAt(0); // this was the first tile
-
+            // check if goal reached
             if (currentTile == goalTile)
             {
                 goalReached = true;
