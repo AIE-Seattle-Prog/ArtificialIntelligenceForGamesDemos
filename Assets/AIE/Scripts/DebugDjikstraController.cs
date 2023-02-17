@@ -29,6 +29,11 @@ public class DebugDjikstraController : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             var pickerRay = cam.ScreenPointToRay(Input.mousePosition);
+
+            if (Physics.Raycast(pickerRay, out var hit, Mathf.Infinity))
+            {
+                //grid.GetTile3D()
+            }
         }
     }
 }

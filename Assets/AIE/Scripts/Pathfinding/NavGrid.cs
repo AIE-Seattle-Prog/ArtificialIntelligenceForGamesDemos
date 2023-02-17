@@ -61,7 +61,7 @@ public class NavGrid : MonoBehaviour
     }
 
     // Get the nearest cell on the grid given a world-space position
-    public Vector3Int GetNearestCellOnGrid(Vector3 point)
+    public Vector3Int GetTileFromWorld(Vector3 point)
     {
         Vector3Int cell = new Vector3Int();
         for (int i = 0; i < 3; ++i)
@@ -71,6 +71,21 @@ public class NavGrid : MonoBehaviour
         }
 
         return cell;
+    }
+
+    public void RemoveTile(Tile target)
+    {
+        // disconnect from connections
+        foreach(var conn in target.connections)
+        {
+            conn.connections.Remove(target);
+        }
+
+        target.connections.Clear();
+
+        // clean-up unity
+        tiles[target.id] = null;
+        Destroy(target.gameObject);
     }
 
     private void Start()
@@ -165,8 +180,8 @@ public class NavGrid : MonoBehaviour
     /// <returns>True if possible, otherwise false.</returns>
     public bool CalculatePath(Vector3 worldStart, Vector3 worldEnd, List<Vector3> path)
     {
-        Vector3Int startInt = GetNearestCellOnGrid(worldStart);
-        Vector3Int endInt = GetNearestCellOnGrid(worldEnd);
+        Vector3Int startInt = GetTileFromWorld(worldStart);
+        Vector3Int endInt = GetTileFromWorld(worldEnd);
 
         return CalculatePath(startInt, endInt, path);
     }
