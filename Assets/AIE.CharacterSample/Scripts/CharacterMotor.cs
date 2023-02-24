@@ -72,7 +72,8 @@ public class CharacterMotor : MonoBehaviour
     private int _animIDJump;
     private int _animIDFreeFall;
     private int _animIDMotionSpeed;
-    
+
+    private Transform _transform;
     private Animator _animator;
     private CharacterController _controller;
 
@@ -83,13 +84,17 @@ public class CharacterMotor : MonoBehaviour
     [NonSerialized] public bool SprintWish;
     [NonSerialized] public Vector3 MoveWish;
 
-    private void Start()
+    private void Awake()
     {
+        _transform = transform;
         _hasAnimator = TryGetComponent(out _animator);
         _controller = GetComponent<CharacterController>();
 
         AssignAnimationIDs();
+    }
 
+    private void Start()
+    {
         // reset our timeouts on start
         _jumpTimeoutDelta = JumpTimeout;
         _fallTimeoutDelta = FallTimeout;

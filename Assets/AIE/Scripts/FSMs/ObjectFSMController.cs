@@ -7,7 +7,9 @@ using UnityEngine.AI;
 public class ObjectFSMController : MonoBehaviour
 {
     public CharacterMotor motor;
-    public NavMeshAgent navAgent;
+    public LayerMask walkableLayers = ~1;
+    private NavMeshPath navMeshPath;
+    private int curNavMeshPathIndex = -1;
 
     [SerializeField]
     public Transform[] patrolPoints;
@@ -29,15 +31,19 @@ public class ObjectFSMController : MonoBehaviour
             this.agent = agent;
         }
 
+        public override void OnStateEnter()
+        {
+            agent.SetDestination(agent.patrolPoints[agent.currentPatrolIndex].position);
+            agent.motor.SprintWish = false;
+        }
+
         public override void OnStateRun()
         {
-            agent.motor.SprintWish = false;
-            agent.motor.MoveWish = (agent.patrolPoints[agent.currentPatrolIndex].position - agent.motor.transform.position).normalized;
-
             // check if wp reached
             if ((agent.motor.transform.position - agent.patrolPoints[agent.currentPatrolIndex].position).sqrMagnitude < agent.waypointThreshold * agent.waypointThreshold)
             {
                 agent.currentPatrolIndex = (agent.currentPatrolIndex + 1) % agent.patrolPoints.Length;
+                agent.SetDestination(agent.patrolPoints[agent.currentPatrolIndex].position);
             }
         }
     }
@@ -51,18 +57,33 @@ public class ObjectFSMController : MonoBehaviour
             this.agent = agent;
         }
 
+        public override void OnStateEnter()
+        {
+            agent.curNavMeshPathIndex = -1;
+            agent.motor.SprintWish = true;
+        }
+
         public override void OnStateRun()
         {
             // early exit if nothing to chase
             if (agent.followTarget == null) { return; }
 
-            agent.motor.SprintWish = true;
             agent.motor.MoveWish = (agent.followTarget.position - agent.motor.transform.position).normalized;
         }
     }
 
+    public void SetDestination(Vector3 destination)
+    {
+        curNavMeshPathIndex = -1;
+        bool canReach = NavMesh.CalculatePath(motor.transform.position, destination, walkableLayers, navMeshPath);
+        if(!canReach) { Debug.LogError($"Can't reach {destination} from this agent", this); return; }
+
+        curNavMeshPathIndex = 0;
+    }
+
     private void Awake()
     {
+        navMeshPath = new();
         fsmRunner = new FiniteStateMachineRunner();
         PatrolState patrol = new PatrolState(this);
         ChaseState chase = new ChaseState(this);
@@ -78,6 +99,20 @@ public class ObjectFSMController : MonoBehaviour
     private void Update()
     {
         fsmRunner.Run();
+
+        if(navMeshPath.status != NavMeshPathStatus.PathInvalid &&
+            curNavMeshPathIndex != -1 &&
+            curNavMeshPathIndex != navMeshPath.corners.Length)
+        {
+            Vector3 pathTarget = navMeshPath.corners[curNavMeshPathIndex];
+            Vector3 offset = pathTarget - motor.transform.position;
+            motor.MoveWish = offset.normalized;
+
+            if (offset.sqrMagnitude < waypointThreshold * waypointThreshold)
+            {
+                ++curNavMeshPathIndex;
+            }
+        }
     }
 
     private void OnTriggerEnter(Collider other)
