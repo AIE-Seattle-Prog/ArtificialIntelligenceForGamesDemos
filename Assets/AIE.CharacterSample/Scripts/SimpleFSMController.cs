@@ -1,15 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class SimpleFSMController : MonoBehaviour
 {
     public CharacterMotor motor;
+    public NavMeshAgent navAgent;
 
     [SerializeField]
     private Transform[] patrolPoints;
     private int currentPatrolIndex;
     public float waypointThreshold = 0.5f;
+    private NavMeshPath currentPath;
     [Space]
     public float attackThreshold = 3.0f;
     private Transform followTarget;
@@ -23,6 +26,7 @@ public class SimpleFSMController : MonoBehaviour
     private States currentState;
     private States nextState;
 
+    private void OnPatrolEnter() { Debug.Log("I guess it was just the wind..."); }
     private void Patrol()
     {
         motor.SprintWish = false;
@@ -38,8 +42,9 @@ public class SimpleFSMController : MonoBehaviour
         //             (TODO: ensure that we have line of sight)
         if (followTarget != null) { nextState = States.Chase; }
     }
-    private void OnPatrolEnter() { Debug.Log("I guess it was just the wind..."); }
     private void OnPatrolExit() { }
+
+    private void OnChaseEnter() { Debug.Log("STOP! You've violated the law!"); }
     private void Chase()
     {
         if(followTarget == null) { currentPatrolIndex = 0; nextState = States.Patrol; return; }
@@ -53,8 +58,9 @@ public class SimpleFSMController : MonoBehaviour
             nextState = States.Attack;
         }
     }
-    private void OnChaseEnter() { Debug.Log("STOP! You've violated the law!"); }
     private void OnChaseExit() { }
+
+    private void OnAttackEnter() { Debug.Log("ROAR!"); }
     private void Attack()
     {
         if (followTarget == null) { currentPatrolIndex = 0; nextState = States.Patrol; return; }
@@ -70,7 +76,6 @@ public class SimpleFSMController : MonoBehaviour
             nextState = States.Chase;
         }
     }
-    private void OnAttackEnter() { Debug.Log("ROAR!"); }
     private void OnAttackExit() { }
 
     private void ChangeState(States newState)
@@ -105,6 +110,11 @@ public class SimpleFSMController : MonoBehaviour
                 OnAttackEnter();
                 break;
         }
+    }
+
+    private void Awake()
+    {
+        currentPath = new NavMeshPath();
     }
 
     private void Update()

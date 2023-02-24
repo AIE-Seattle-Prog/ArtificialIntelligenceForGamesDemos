@@ -1287,29 +1287,6 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 3
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1507426273
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1507426264}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a43d91a13679e94c8ca5b98750ca66a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  motor: {fileID: 1507426267}
-  patrolPoints:
-  - {fileID: 1995418640}
-  - {fileID: 1724281653}
-  - {fileID: 1622873269}
-  - {fileID: 952878873}
-  - {fileID: 1235195308}
-  - {fileID: 1828092129}
-  - {fileID: 227193930}
-  waypointThreshold: 0.5
-  attackThreshold: 1
 --- !u!195 &1507426274
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -1332,6 +1309,31 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &1507426275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1507426264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e361970aeead15847b702d59557131b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  motor: {fileID: 1507426267}
+  navAgent: {fileID: 1507426274}
+  patrolPoints:
+  - {fileID: 1995418640}
+  - {fileID: 1724281653}
+  - {fileID: 1622873269}
+  - {fileID: 952878873}
+  - {fileID: 1235195308}
+  - {fileID: 1828092129}
+  currentPatrolIndex: 0
+  waypointThreshold: 0.5
+  attackThreshold: 3
+  followTarget: {fileID: 0}
 --- !u!1 &1523207593 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8944336655422409498, guid: f6d148d888ffbf54b9afe9936dfaec1f,
