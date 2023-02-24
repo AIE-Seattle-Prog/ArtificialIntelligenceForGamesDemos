@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,10 +20,59 @@ public class ObjectFSMController : MonoBehaviour
 
     private FiniteStateMachineRunner fsmRunner;
 
+    private class PatrolState : BaseState
+    {
+        public ObjectFSMController agent;
+
+        public PatrolState(ObjectFSMController agent)
+        {
+            this.agent = agent;
+        }
+
+        public override void OnStateRun()
+        {
+            agent.motor.SprintWish = false;
+            agent.motor.MoveWish = (agent.patrolPoints[agent.currentPatrolIndex].position - agent.motor.transform.position).normalized;
+
+            // check if wp reached
+            if ((agent.motor.transform.position - agent.patrolPoints[agent.currentPatrolIndex].position).sqrMagnitude < agent.waypointThreshold * agent.waypointThreshold)
+            {
+                agent.currentPatrolIndex = (agent.currentPatrolIndex + 1) % agent.patrolPoints.Length;
+            }
+        }
+    }
+
+    private class ChaseState : BaseState
+    {
+        public ObjectFSMController agent;
+
+        public ChaseState(ObjectFSMController agent)
+        {
+            this.agent = agent;
+        }
+
+        public override void OnStateRun()
+        {
+            // early exit if nothing to chase
+            if (agent.followTarget == null) { return; }
+
+            agent.motor.SprintWish = true;
+            agent.motor.MoveWish = (agent.followTarget.position - agent.motor.transform.position).normalized;
+        }
+    }
+
     private void Awake()
     {
         fsmRunner = new FiniteStateMachineRunner();
-        fsmRunner.CurrentState = new PatrolState(this);
+        PatrolState patrol = new PatrolState(this);
+        ChaseState chase = new ChaseState(this);
+
+        // patrol => chase
+        patrol.AddCondition(new BooleanTransition(chase, true, () => { return followTarget != null; }));
+        // chase => patrol
+        chase.AddCondition(new BooleanTransition(patrol, true, () => { return followTarget == null; }));
+
+        fsmRunner.CurrentState = patrol;
     }
 
     private void Update()
@@ -32,7 +82,7 @@ public class ObjectFSMController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.CompareTag("Player"))
+        if (other.CompareTag("Player"))
         {
             followTarget = other.transform;
         }
@@ -44,85 +94,5 @@ public class ObjectFSMController : MonoBehaviour
         {
             followTarget = null;
         }
-    }
-}
-
-public class PatrolState : IFiniteState
-{
-    public ObjectFSMController agent;
-
-    private List<IStateTransition> transitions = new List<IStateTransition>();
-
-    public PatrolState(ObjectFSMController agent)
-    {
-        this.agent = agent;
-    }
-
-    public void OnStateEnter() { /* left intentionally blank */ }
-
-    public void OnStateRun()
-    {
-        agent.motor.SprintWish = false;
-        agent.motor.MoveWish = (agent.patrolPoints[agent.currentPatrolIndex].position - agent.motor.transform.position).normalized;
-
-        // check if wp reached
-        if ((agent.motor.transform.position - agent.patrolPoints[agent.currentPatrolIndex].position).sqrMagnitude < agent.waypointThreshold * agent.waypointThreshold)
-        {
-            agent.currentPatrolIndex = (agent.currentPatrolIndex + 1) % agent.patrolPoints.Length;
-        }
-    }
-
-    public void OnStateExit() { /* left intentionally blank */ }
-
-    public void AddCondition(IStateTransition transition)
-    {
-        transitions.Add(transition);
-    }
-
-    public void RemoveCondition(IStateTransition transition)
-    {
-        transitions.Remove(transition);
-    }
-
-    public IFiniteState ChangeState()
-    {
-        foreach(var potentialTransition in transitions)
-        {
-            if(potentialTransition.ShouldTransition())
-            {
-                return potentialTransition.NextState;
-            }
-        }
-
-        return this;
-    }
-}
-
-public class HasFollowTarget : IStateTransition
-{
-    public IFiniteState NextState { get; set; }
-
-    public Transform target;
-
-    public bool ShouldTransition() => target != null;
-}
-
-public class CompoundTransition : IStateTransition
-{
-    public IFiniteState NextState { get; set; }
-
-    public List<IStateTransition> orTransitions = new List<IStateTransition>();
-
-    public bool ShouldTransition()
-    {
-        foreach(var transition in orTransitions)
-        {
-            if(transition.ShouldTransition())
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

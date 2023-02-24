@@ -5,7 +5,7 @@ using UnityEngine;
 public class FiniteStateMachineRunner
 {
     public IFiniteState PreviousState { get; private set; }
-    public IFiniteState currentState;
+    private IFiniteState currentState;
     public IFiniteState CurrentState
     {
         get => currentState;

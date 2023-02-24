@@ -150,7 +150,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 227193929}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.777958, y: 0.0000009536743, z: 15.590485}
+  m_LocalPosition: {x: -8.68, y: 0.0000009536743, z: 15.79}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1287,28 +1287,6 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 3
   m_Center: {x: 0, y: 0, z: 0}
---- !u!195 &1507426274
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1507426264}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 0.5
-  m_Speed: 3.5
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 2
-  m_BaseOffset: 0
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
 --- !u!114 &1507426275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1322,7 +1300,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   motor: {fileID: 1507426267}
-  navAgent: {fileID: 1507426274}
+  navAgent: {fileID: 0}
   patrolPoints:
   - {fileID: 1995418640}
   - {fileID: 1724281653}
@@ -1330,6 +1308,7 @@ MonoBehaviour:
   - {fileID: 952878873}
   - {fileID: 1235195308}
   - {fileID: 1828092129}
+  - {fileID: 227193930}
   currentPatrolIndex: 0
   waypointThreshold: 0.5
   attackThreshold: 3

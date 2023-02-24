@@ -6,6 +6,7 @@ using Random = UnityEngine.Random;
 /* Note: animations are called via the motor */
 
 [RequireComponent(typeof(CharacterController))]
+[SelectionBase]
 public class CharacterMotor : MonoBehaviour
 {
     [Header("Player")]
