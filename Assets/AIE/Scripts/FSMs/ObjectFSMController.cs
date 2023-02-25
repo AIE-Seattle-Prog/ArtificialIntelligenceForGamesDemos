@@ -4,21 +4,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class ObjectFSMController : MonoBehaviour
+public class ObjectFSMController : BaseHumanoidController
 {
-    public CharacterMotor motor;
-    public LayerMask walkableLayers = ~1;
+    [Header("AI Controller")]
+    public LayerMask visibilityMask = ~1;
+
     private NavMeshPath navMeshPath;
     private int curNavMeshPathIndex = -1;
 
     [SerializeField]
     public Transform[] patrolPoints;
+    [NonSerialized]
     public int currentPatrolIndex;
 
     public float waypointThreshold = 0.5f;
     [Space]
     public float attackThreshold = 3.0f;
+    [NonSerialized]
     public Transform followTarget;
+
+    [Header("Steering Forces")]
+    public float patrolStrength = 5.0f;
+    public float chaseStrength = 3.0f;
 
     private FiniteStateMachineRunner fsmRunner;
 
@@ -68,17 +75,47 @@ public class ObjectFSMController : MonoBehaviour
             // early exit if nothing to chase
             if (agent.followTarget == null) { return; }
 
-            agent.motor.MoveWish = (agent.followTarget.position - agent.motor.transform.position).normalized;
+            bool meOnNav = NavMesh.SamplePosition(agent.motor.transform.position, out var myHit, 1.0f, NavMesh.AllAreas);
+            bool followOnNav = NavMesh.SamplePosition(agent.followTarget.position, out var followHit, 1.0f, NavMesh.AllAreas);
+
+            bool hasClearPath = meOnNav && followOnNav && !NavMesh.Raycast(myHit.position, followHit.position, out var navCastHit, NavMesh.AllAreas);
+            if (hasClearPath)
+            {
+                Vector3 chaseForce = SteeringMethods.Seek(agent.motor.transform.position, agent.followTarget.position, agent.motor.MoveWish, 1.0f);
+                chaseForce.y = 0.0f;
+                chaseForce = chaseForce.normalized * (agent.chaseStrength * Time.deltaTime);
+                agent.motor.MoveWish += chaseForce;
+                agent.motor.MoveWish.Normalize();
+            }
+            else
+            {
+                if (followOnNav)
+                {
+                    if (agent.curNavMeshPathIndex == -1)
+                    {
+                        agent.SetDestination(followHit.position);
+                    }
+                }
+                else
+                {
+                    Vector3 chaseForce = SteeringMethods.Seek(agent.motor.transform.position, agent.followTarget.position, agent.motor.MoveWish, 1.0f);
+                    chaseForce.y = 0.0f;
+                    chaseForce = chaseForce.normalized * (agent.chaseStrength * Time.deltaTime);
+                    agent.motor.MoveWish += chaseForce;
+                    agent.motor.MoveWish.Normalize();
+                }
+            }
         }
     }
 
-    public void SetDestination(Vector3 destination)
+    public bool SetDestination(Vector3 destination)
     {
         curNavMeshPathIndex = -1;
-        bool canReach = NavMesh.CalculatePath(motor.transform.position, destination, walkableLayers, navMeshPath);
-        if(!canReach) { Debug.LogError($"Can't reach {destination} from this agent", this); return; }
+        bool canReach = NavMesh.CalculatePath(motor.transform.position, destination, motor.GroundLayers, navMeshPath);
+        if(!canReach) { Debug.LogError($"Can't reach {destination} from this agent", this); return false; }
 
         curNavMeshPathIndex = 0;
+        return true;
     }
 
     private void Awake()
@@ -108,6 +145,14 @@ public class ObjectFSMController : MonoBehaviour
             Vector3 offset = pathTarget - motor.transform.position;
             motor.MoveWish = offset.normalized;
 
+            float strength = followTarget == null ? patrolStrength : chaseStrength;
+
+            Vector3 pathForce = SteeringMethods.Seek(motor.transform.position, pathTarget, motor.MoveWish, 1.0f);
+            pathForce.y = 0.0f;
+            pathForce = pathForce.normalized * (strength * Time.deltaTime);
+            motor.MoveWish += pathForce;
+            motor.MoveWish.Normalize();
+
             if (offset.sqrMagnitude < waypointThreshold * waypointThreshold)
             {
                 ++curNavMeshPathIndex;
@@ -117,15 +162,20 @@ public class ObjectFSMController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        // always auto follow the player
+        if (other.TryGetComponent<BaseHumanoidController>(out var otherController))
         {
-            followTarget = other.transform;
+            if(otherController.factionId != factionId)
+            {
+                followTarget = other.transform;
+            }
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        // unfollow if target escapes detection radius
+        if(other.transform == followTarget)
         {
             followTarget = null;
         }

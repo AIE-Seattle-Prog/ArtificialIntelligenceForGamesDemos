@@ -13,7 +13,7 @@ namespace StarterAssets
 		private Vector2 moveWish;
 		private Vector2 lookWish;
 		private const float _threshold = 0.01f;
-		
+
 		[Header("Mouse Cursor Settings")]
 		public bool cursorLocked = true;
 		public bool cursorInputForLook = true;
@@ -23,11 +23,12 @@ namespace StarterAssets
 		public PlayerInput input;
 #endif
 		// camera
-		[Header("Camera")] [SerializeField]
+		[Header("Camera")]
+		[SerializeField]
 		private GameObject _mainCamera;
 		private float _TargetYaw;
 		private float _TargetPitch;
-		
+
 		public bool IsCurrentDeviceMouse
 		{
 			get
@@ -36,10 +37,10 @@ namespace StarterAssets
 				return true;
 			}
 		}
-		
+
 		[Tooltip("The follow target set that the camera will follow")]
 		public GameObject CameraTarget;
-		
+
 		[Tooltip("How far in degrees can you move the camera up")]
 		public float TopClamp = 70.0f;
 
@@ -58,7 +59,7 @@ namespace StarterAssets
 			if (lfAngle > 360f) lfAngle -= 360f;
 			return Mathf.Clamp(lfAngle, lfMin, lfMax);
 		}
-		
+
 #if ENABLE_INPUT_SYSTEM
 		// to be called by 'Send Messages' on a co-located PlayerInput component
 		
@@ -89,7 +90,7 @@ namespace StarterAssets
 		public void MoveInput(Vector2 newMoveDirection)
 		{
 			moveWish = newMoveDirection;
-		} 
+		}
 
 		public void LookInput(Vector2 newLookDirection)
 		{
@@ -110,7 +111,7 @@ namespace StarterAssets
 		{
 			Cursor.lockState = newState ? CursorLockMode.Locked : CursorLockMode.None;
 		}
-		
+
 		private void ControlRotation()
 		{
 			// if there is an input and camera position is not fixed
@@ -135,7 +136,7 @@ namespace StarterAssets
 		private void Awake()
 		{
 			_TargetYaw = CameraTarget.transform.rotation.eulerAngles.y;
-			
+
 			// get a reference to our main camera
 			if (_mainCamera == null)
 			{
@@ -149,11 +150,11 @@ namespace StarterAssets
 			float horz = Input.GetAxisRaw("Horizontal");
 			float vert = Input.GetAxisRaw("Vertical");
 			MoveInput(new Vector2(horz, vert));
-			
+
 			float lookX = Input.GetAxisRaw("Mouse X");
 			float lookY = -Input.GetAxisRaw("Mouse Y");
 			LookInput(new Vector2(lookX, lookY));
-			
+
 			if (Input.GetButtonDown("Jump"))
 			{
 				JumpInput(true);
@@ -161,7 +162,7 @@ namespace StarterAssets
 
 			SprintInput(Input.GetButton("Sprint"));
 #endif
-			
+
 			Vector3 rotatedMoveWish = Quaternion.Euler(0.0f, _TargetYaw, 0.0f) * new Vector3(moveWish.x, 0, moveWish.y);
 			motor.MoveWish = rotatedMoveWish;
 		}
@@ -170,11 +171,11 @@ namespace StarterAssets
 		{
 			ControlRotation();
 		}
-		
+
 		private void OnApplicationFocus(bool hasFocus)
 		{
 			SetCursorState(cursorLocked);
 		}
 	}
-	
+
 }
