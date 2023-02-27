@@ -8,8 +8,21 @@ public class ObjectFSMController : BaseHumanoidController
 {
     [Header("AI Controller")]
     public LayerMask visibilityMask = ~1;
+    public int navAgentTypeID;
+    private NavMeshQueryFilter navFilter;
 
     private NavMeshPath navMeshPath;
+
+    public Vector3 Destination
+    {
+        get
+        {
+            return navMeshPath != null && navMeshPath.status != NavMeshPathStatus.PathInvalid
+                ? navMeshPath.corners[navMeshPath.corners.Length - 1]
+                : Vector3.zero;
+        }
+    }
+
     private int curNavMeshPathIndex = -1;
 
     [SerializeField]
@@ -91,7 +104,11 @@ public class ObjectFSMController : BaseHumanoidController
             {
                 if (followOnNav)
                 {
-                    if (agent.curNavMeshPathIndex == -1)
+                    bool isPathStale = NavMesh.Raycast(agent.Destination, 
+                        followHit.position,
+                        out var staleHit, 
+                        NavMesh.AllAreas);
+                    if (isPathStale)
                     {
                         agent.SetDestination(followHit.position);
                     }
@@ -111,16 +128,26 @@ public class ObjectFSMController : BaseHumanoidController
     public bool SetDestination(Vector3 destination)
     {
         curNavMeshPathIndex = -1;
-        bool canReach = NavMesh.CalculatePath(motor.transform.position, destination, motor.GroundLayers, navMeshPath);
-        if(!canReach) { Debug.LogError($"Can't reach {destination} from this agent", this); return false; }
+        bool canReach = NavMesh.CalculatePath(motor.transform.position, destination, navFilter,  navMeshPath);
+        if(!canReach) { return false; }
 
         curNavMeshPathIndex = 0;
+        
+        // skip first wp if it's too close
+        Vector3 pathTarget = navMeshPath.corners[curNavMeshPathIndex];
+        Vector3 offset = pathTarget - motor.transform.position;
+        if (offset.sqrMagnitude < waypointThreshold * waypointThreshold)
+        {
+            ++curNavMeshPathIndex;
+        }
+        
         return true;
     }
 
     private void Awake()
     {
         navMeshPath = new();
+        navFilter = new NavMeshQueryFilter() { agentTypeID = navAgentTypeID, areaMask = NavMesh.AllAreas };
         fsmRunner = new FiniteStateMachineRunner();
         PatrolState patrol = new PatrolState(this);
         ChaseState chase = new ChaseState(this);
@@ -178,6 +205,24 @@ public class ObjectFSMController : BaseHumanoidController
         if(other.transform == followTarget)
         {
             followTarget = null;
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (navMeshPath != null &&
+            navMeshPath.status != NavMeshPathStatus.PathInvalid &&
+            curNavMeshPathIndex != -1 &&
+            curNavMeshPathIndex != navMeshPath.corners.Length)
+        {
+            Gizmos.color = Color.green;
+            
+            Gizmos.DrawLine(motor.transform.position, navMeshPath.corners[curNavMeshPathIndex]);
+            
+            for (int i = curNavMeshPathIndex; i < navMeshPath.corners.Length - 1; ++i)
+            {
+                Gizmos.DrawLine(navMeshPath.corners[i], navMeshPath.corners[i+1]);
+            }
         }
     }
 }

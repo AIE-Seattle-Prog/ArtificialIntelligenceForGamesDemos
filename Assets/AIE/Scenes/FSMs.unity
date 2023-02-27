@@ -425,6 +425,11 @@ PrefabInstance:
       propertyPath: GroundedOffset
       value: 0.1
       objectReference: {fileID: 0}
+    - target: {fileID: 4416926081852918491, guid: 64dce48905ffd9b4293e595fa6941544,
+        type: 3}
+      propertyPath: m_StepOffset
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 4523139366846529165, guid: 64dce48905ffd9b4293e595fa6941544,
         type: 3}
       propertyPath: m_Layer
@@ -804,7 +809,7 @@ MonoBehaviour:
   m_OverrideTileSize: 0
   m_TileSize: 256
   m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.16666667
+  m_VoxelSize: 0.093333334
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: ad470225502d4b449af62d219ddc41f9, type: 2}
   m_BuildHeightMesh: 0
@@ -1221,12 +1226,12 @@ PrefabInstance:
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.9920291
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: 0.12600932
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
@@ -1341,6 +1346,7 @@ MonoBehaviour:
   visibilityMask:
     serializedVersion: 2
     m_Bits: 4294967294
+  navAgentTypeID: 0
   patrolPoints:
   - {fileID: 1995418640}
   - {fileID: 1724281653}
@@ -1746,12 +1752,12 @@ PrefabInstance:
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.9920291
       objectReference: {fileID: 0}
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: 0.12600932
       objectReference: {fileID: 0}
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}
