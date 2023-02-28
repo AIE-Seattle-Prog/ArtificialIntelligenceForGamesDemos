@@ -809,7 +809,7 @@ MonoBehaviour:
   m_OverrideTileSize: 0
   m_TileSize: 256
   m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.093333334
+  m_VoxelSize: 0.1
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: ad470225502d4b449af62d219ddc41f9, type: 2}
   m_BuildHeightMesh: 0
@@ -1226,12 +1226,12 @@ PrefabInstance:
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9920291
+      value: 0.99999654
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.12600932
+      value: 0.0026248782
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
@@ -1326,7 +1326,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 3
+  m_Radius: 5
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &1507426275
 MonoBehaviour:
@@ -1345,7 +1345,7 @@ MonoBehaviour:
   factionId: 1
   visibilityMask:
     serializedVersion: 2
-    m_Bits: 4294967294
+    m_Bits: 55
   navAgentTypeID: 0
   patrolPoints:
   - {fileID: 1995418640}
@@ -1752,12 +1752,12 @@ PrefabInstance:
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9920291
+      value: 0.99999654
       objectReference: {fileID: 0}
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.12600932
+      value: 0.0026248782
       objectReference: {fileID: 0}
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}

@@ -8,10 +8,12 @@ public class ObjectFSMController : BaseHumanoidController
 {
     [Header("AI Controller")]
     public LayerMask visibilityMask = ~1;
-    public int navAgentTypeID;
-    private NavMeshQueryFilter navFilter;
 
+    [SerializeField]
+    private int navAgentTypeID;
     private NavMeshPath navMeshPath;
+    private int curNavMeshPathIndex = -1;
+    private NavMeshQueryFilter navFilter;
 
     public Vector3 Destination
     {
@@ -22,9 +24,9 @@ public class ObjectFSMController : BaseHumanoidController
                 : Vector3.zero;
         }
     }
+    public bool HasReachedDestination { get; private set; }
 
-    private int curNavMeshPathIndex = -1;
-
+    [Space]
     [SerializeField]
     public Transform[] patrolPoints;
     [NonSerialized]
@@ -33,8 +35,10 @@ public class ObjectFSMController : BaseHumanoidController
     public float waypointThreshold = 0.5f;
     [Space]
     public float attackThreshold = 3.0f;
+
+    private HashSet<BaseHumanoidController> enemyCandidates = new();
     [NonSerialized]
-    public Transform followTarget;
+    public BaseHumanoidController followTarget;
 
     [Header("Steering Forces")]
     public float patrolStrength = 5.0f;
@@ -89,12 +93,13 @@ public class ObjectFSMController : BaseHumanoidController
             if (agent.followTarget == null) { return; }
 
             bool meOnNav = NavMesh.SamplePosition(agent.motor.transform.position, out var myHit, 1.0f, NavMesh.AllAreas);
-            bool followOnNav = NavMesh.SamplePosition(agent.followTarget.position, out var followHit, 1.0f, NavMesh.AllAreas);
+            bool followOnNav = NavMesh.SamplePosition(agent.followTarget.transform.position, out var followHit, 1.0f, NavMesh.AllAreas);
 
-            bool hasClearPath = meOnNav && followOnNav && !NavMesh.Raycast(myHit.position, followHit.position, out var navCastHit, NavMesh.AllAreas);
+            NavMeshHit navCastHit = new ();
+            bool hasClearPath = meOnNav && followOnNav && !NavMesh.Raycast(myHit.position, followHit.position, out navCastHit, NavMesh.AllAreas);
             if (hasClearPath)
             {
-                Vector3 chaseForce = SteeringMethods.Seek(agent.motor.transform.position, agent.followTarget.position, agent.motor.MoveWish, 1.0f);
+                Vector3 chaseForce = SteeringMethods.Seek(agent.motor.transform.position, agent.followTarget.transform.position, agent.motor.MoveWish, 1.0f);
                 chaseForce.y = 0.0f;
                 chaseForce = chaseForce.normalized * (agent.chaseStrength * Time.deltaTime);
                 agent.motor.MoveWish += chaseForce;
@@ -102,12 +107,16 @@ public class ObjectFSMController : BaseHumanoidController
             }
             else
             {
+                // draw obstruction
+                Debug.DrawRay(navCastHit.position, Vector3.up * 3.0f, Color.red, 0.1f);
                 if (followOnNav)
                 {
                     bool isPathStale = NavMesh.Raycast(agent.Destination, 
                         followHit.position,
                         out var staleHit, 
-                        NavMesh.AllAreas);
+                        NavMesh.AllAreas) || agent.HasReachedDestination;
+                    
+                    Debug.DrawRay(agent.Destination, Vector3.up * 3.0f, Color.green, 0.1f);
                     if (isPathStale)
                     {
                         agent.SetDestination(followHit.position);
@@ -115,7 +124,7 @@ public class ObjectFSMController : BaseHumanoidController
                 }
                 else
                 {
-                    Vector3 chaseForce = SteeringMethods.Seek(agent.motor.transform.position, agent.followTarget.position, agent.motor.MoveWish, 1.0f);
+                    Vector3 chaseForce = SteeringMethods.Seek(agent.motor.transform.position, agent.followTarget.transform.position, agent.motor.MoveWish, 1.0f);
                     chaseForce.y = 0.0f;
                     chaseForce = chaseForce.normalized * (agent.chaseStrength * Time.deltaTime);
                     agent.motor.MoveWish += chaseForce;
@@ -128,6 +137,7 @@ public class ObjectFSMController : BaseHumanoidController
     public bool SetDestination(Vector3 destination)
     {
         curNavMeshPathIndex = -1;
+        HasReachedDestination = false;
         bool canReach = NavMesh.CalculatePath(motor.transform.position, destination, navFilter,  navMeshPath);
         if(!canReach) { return false; }
 
@@ -139,6 +149,7 @@ public class ObjectFSMController : BaseHumanoidController
         if (offset.sqrMagnitude < waypointThreshold * waypointThreshold)
         {
             ++curNavMeshPathIndex;
+            HasReachedDestination = curNavMeshPathIndex >= navMeshPath.corners.Length;
         }
         
         return true;
@@ -162,11 +173,53 @@ public class ObjectFSMController : BaseHumanoidController
 
     private void Update()
     {
+        // target acquisition - only if we don't have one yet
+        if (followTarget == null)
+        {
+            foreach (var curCandidate in enemyCandidates)
+            {
+                bool canSee = !Physics.Linecast(headTransform.position, curCandidate.headTransform.position, out RaycastHit losHit,
+                    visibilityMask, QueryTriggerInteraction.Ignore);
+                
+                // we can still see them if the only thing we hit was them
+                if (!canSee)
+                {
+                    canSee = losHit.collider.gameObject == curCandidate.gameObject;
+                }
+                
+                // so, can we see them? if so, follow them!
+                if (canSee)
+                {
+                    followTarget = curCandidate;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            bool canSee = !Physics.Linecast(headTransform.position, followTarget.headTransform.position, out RaycastHit losHit,
+                visibilityMask, QueryTriggerInteraction.Ignore);
+
+            // we can still see them if the only thing we hit was them
+            if (!canSee)
+            {
+                canSee = losHit.collider.gameObject == followTarget.gameObject;
+            }
+            
+            // if we still can't see them, drop it
+            if (!canSee)
+            {
+                followTarget = null;
+            }
+        }
+
+        // fsm
         fsmRunner.Run();
 
+        // pathfinding
         if(navMeshPath.status != NavMeshPathStatus.PathInvalid &&
-            curNavMeshPathIndex != -1 &&
-            curNavMeshPathIndex != navMeshPath.corners.Length)
+           curNavMeshPathIndex != -1 &&
+           curNavMeshPathIndex != navMeshPath.corners.Length)
         {
             Vector3 pathTarget = navMeshPath.corners[curNavMeshPathIndex];
             Vector3 offset = pathTarget - motor.transform.position;
@@ -183,18 +236,19 @@ public class ObjectFSMController : BaseHumanoidController
             if (offset.sqrMagnitude < waypointThreshold * waypointThreshold)
             {
                 ++curNavMeshPathIndex;
+                HasReachedDestination = curNavMeshPathIndex >= navMeshPath.corners.Length;
             }
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // always auto follow the player
+        // always auto follow enemies
         if (other.TryGetComponent<BaseHumanoidController>(out var otherController))
         {
             if(otherController.factionId != factionId)
             {
-                followTarget = other.transform;
+                enemyCandidates.Add(otherController);
             }
         }
     }
@@ -202,9 +256,13 @@ public class ObjectFSMController : BaseHumanoidController
     private void OnTriggerExit(Collider other)
     {
         // unfollow if target escapes detection radius
-        if(other.transform == followTarget)
+        if (other.TryGetComponent<BaseHumanoidController>(out var otherController))
         {
-            followTarget = null;
+            // assuming that enemies can't change factionIDs at runtime
+            if(otherController.factionId != factionId)
+            {
+                enemyCandidates.Remove(otherController);
+            }
         }
     }
 
@@ -215,8 +273,12 @@ public class ObjectFSMController : BaseHumanoidController
             curNavMeshPathIndex != -1 &&
             curNavMeshPathIndex != navMeshPath.corners.Length)
         {
-            Gizmos.color = Color.green;
+            Gizmos.color = Color.white;
+
+            Gizmos.DrawWireSphere(motor.transform.position, waypointThreshold);
             
+            Gizmos.color = Color.green;
+
             Gizmos.DrawLine(motor.transform.position, navMeshPath.corners[curNavMeshPathIndex]);
             
             for (int i = curNavMeshPathIndex; i < navMeshPath.corners.Length - 1; ++i)
