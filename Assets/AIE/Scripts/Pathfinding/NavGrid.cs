@@ -355,4 +355,9 @@ public class NavGrid : MonoBehaviour
     {
         return Mathf.Abs(gridStart.x - gridEnd.x) + Mathf.Abs(gridStart.y - gridEnd.y); 
     }
+
+    private int DijkstraDistance(Vector2Int gridStart, Vector2Int gridEnd)
+    {
+        return 0;
+    }
 }
