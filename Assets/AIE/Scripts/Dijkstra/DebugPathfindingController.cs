@@ -2,11 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DebugDjikstraController : MonoBehaviour
+public class DebugPathfindingController : MonoBehaviour
 {
     public Camera cam;
     public TileAIController tileAgent;
     public NavGrid grid;
+
+    public bool useAStar = false;
+    private Vector3 clickLocation;
 
     void Update()
     {
@@ -17,8 +20,19 @@ public class DebugDjikstraController : MonoBehaviour
 
             if (Physics.Raycast(pickerRay, out var hit, Mathf.Infinity))
             {
+                clickLocation = hit.point;
                 List<Vector3> path = new();
-                if (grid.CalculatePath(tileAgent.transform.position, hit.point, path))
+
+                if(useAStar)
+                {
+                    grid.CalculatePathAStar(tileAgent.transform.position, hit.point, path);
+                }
+                else
+                {
+                    grid.CalculatePath(tileAgent.transform.position, hit.point, path);
+                }
+
+                if (path.Count > 0)
                 {
                     tileAgent.SetPath(path);
                 }
@@ -29,6 +43,15 @@ public class DebugDjikstraController : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             var pickerRay = cam.ScreenPointToRay(Input.mousePosition);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.blue;
+        if (clickLocation != Vector3.zero)
+        {
+            Gizmos.DrawRay(clickLocation, Vector3.up * 3.0f);
         }
     }
 }

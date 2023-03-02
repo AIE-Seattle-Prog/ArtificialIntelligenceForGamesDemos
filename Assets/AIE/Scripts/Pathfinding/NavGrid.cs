@@ -145,14 +145,17 @@ public class NavGrid : MonoBehaviour
     {
         public Tile tile;
 
-        public float distance = Mathf.Infinity;
+        public float gScore = Mathf.Infinity;
+        public float hScore = 0;
+        public float fScore => gScore + hScore;
+
         public TileRecord prev;
 
         public TileRecord(Tile tile) { this.tile = tile; }
 
         public int CompareTo(TileRecord other)
         {
-            return distance.CompareTo(other.distance);
+            return fScore.CompareTo(other.gScore);
         }
     }
 
@@ -193,7 +196,7 @@ public class NavGrid : MonoBehaviour
         // TBD: allow variable move cost
         const int moveCost = 1;
 
-        records[GetTile2D(gridStart).id].distance = 0.0f;
+        records[GetTile2D(gridStart).id].gScore = 0.0f;
         openList.Add(records[GetTile2D(gridStart).id]);
 
         TileRecord goalTile = records[GetTile2D(gridEnd).id];
@@ -211,10 +214,10 @@ public class NavGrid : MonoBehaviour
                 // skip tiles that are already evaluated
                 if(closedList.Contains(records[connection.id])) { continue; }
 
-                float tentativeDist = currentTile.distance + moveCost;
-                if (records[connection.id].distance > tentativeDist)
+                float tentativeDist = currentTile.gScore + moveCost;
+                if (records[connection.id].gScore > tentativeDist)
                 {
-                    records[connection.id].distance = tentativeDist;
+                    records[connection.id].gScore = tentativeDist;
                     records[connection.id].prev = currentTile;
                     openList.Sort();
                 }
@@ -253,5 +256,110 @@ public class NavGrid : MonoBehaviour
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Given two world-space positions, plots a path between them if possible.
+    /// </summary>
+    /// <param name="worldStart">Starting world-space position.</param>
+    /// <param name="worldEnd">Ending world-space position.</param>
+    /// <param name="path">To be populated with the path, if possible. Must be non-null.</param>
+    /// <returns>True if possible, otherwise false.</returns>
+    public bool CalculatePathAStar(Vector3 worldStart, Vector3 worldEnd, List<Vector3> path)
+    {
+        Vector3Int startInt = GetNearestCellOnGrid(worldStart);
+        Vector3Int endInt = GetNearestCellOnGrid(worldEnd);
+
+        return CalculatePathAStar(startInt, endInt, path);
+    }
+
+    /// <summary>
+    /// Given two grid positions, plots a path between them if possible.
+    /// </summary>
+    /// <param name="gridStart">Starting grid position.</param>
+    /// <param name="gridEnd">Ending grid position.</param>
+    /// <param name="path">To be populated with the path, if possible. Must be non-null.</param>
+    /// <returns>True if possible, otherwise false.</returns>
+    public bool CalculatePathAStar(Vector3Int gridStart, Vector3Int gridEnd, List<Vector3> path)
+    {
+        // create copies of each tile w/ metadata for pathfinding purposes
+        TileRecord[] records = new TileRecord[TileCount];
+        for (int i = 0; i < TileCount; ++i)
+        {
+            records[i] = new TileRecord(GetTile(i));
+        }
+
+        List<TileRecord> openList = new();
+        HashSet<TileRecord> closedList = new();
+
+        // TBD: allow variable move cost
+        const int moveCost = 1;
+
+        records[GetTile2D(gridStart).id].gScore = 0.0f;
+        openList.Add(records[GetTile2D(gridStart).id]);
+
+        TileRecord goalTile = records[GetTile2D(gridEnd).id];
+        bool goalReached = false;
+        while (openList.Count > 0)
+        {
+            TileRecord currentTile = openList[0];
+            // remove current tile from unvisited list
+            openList.Remove(currentTile);
+            closedList.Add(currentTile);
+
+            // calculate new distance for all tiles
+            foreach (var connection in currentTile.tile.connections)
+            {
+                // skip tiles that are already evaluated
+                if (closedList.Contains(records[connection.id])) { continue; }
+
+                float tentativeDist = currentTile.gScore + moveCost;
+                if (records[connection.id].gScore > tentativeDist)
+                {
+                    records[connection.id].gScore = tentativeDist;
+                    records[connection.id].hScore = ManhattanDistance(connection.GridPosition, goalTile.tile.GridPosition );
+                    records[connection.id].prev = currentTile;
+                    openList.Sort();
+                }
+
+                // add to open list if not already added
+                if (!openList.Contains(records[connection.id]))
+                {
+                    openList.Add(records[connection.id]);
+                    openList.Sort();
+                }
+            }
+
+            // check if goal reached
+            if (currentTile == goalTile)
+            {
+                goalReached = true;
+                break;
+            }
+        }
+
+        // early exit if path not possible
+        if (!goalReached) { path.Clear(); return false; }
+
+        // retrace the path
+        List<Vector3> pathTrace = new List<Vector3>();
+        for (var cur = goalTile; cur != null; cur = cur.prev)
+        {
+            pathTrace.Add(cur.tile.transform.position);
+        }
+
+        // repopulate with path nodes
+        path.Clear();
+        for (int i = 0; i < pathTrace.Count; ++i)
+        {
+            path.Add(pathTrace[pathTrace.Count - 1 - i]);
+        }
+
+        return true;
+    }
+
+    private int ManhattanDistance(Vector3Int gridStart, Vector3Int gridEnd)
+    {
+        return Mathf.Abs(gridStart.x - gridEnd.x) + Mathf.Abs(gridStart.z - gridEnd.z); 
     }
 }

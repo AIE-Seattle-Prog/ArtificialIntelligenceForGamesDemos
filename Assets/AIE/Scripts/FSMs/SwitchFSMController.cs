@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class SimpleFSMController : MonoBehaviour
+public class SwitchFSMController : MonoBehaviour
 {
     public CharacterMotor motor;
     public NavMeshAgent navAgent;
