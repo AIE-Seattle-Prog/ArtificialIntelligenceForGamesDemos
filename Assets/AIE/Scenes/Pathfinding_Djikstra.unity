@@ -373,6 +373,7 @@ MonoBehaviour:
   cam: {fileID: 1134393716}
   tileAgent: {fileID: 1330251203}
   grid: {fileID: 1572041023}
+  useAStar: 0
 --- !u!1 &1330251202 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8424200808032453181, guid: 1d4ab508e292cd2449dd9415dea2a4ae,
@@ -441,7 +442,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tilePrefab: {fileID: 1653438036157813019, guid: ec52bee6a384aa4489e050d99cc30d3c,
     type: 3}
-  dimensions: {x: 30, y: 1, z: 20}
+  dimensions: {x: 15, y: 15}
 --- !u!4 &1572041024
 Transform:
   m_ObjectHideFlags: 0

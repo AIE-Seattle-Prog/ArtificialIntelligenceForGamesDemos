@@ -6,8 +6,8 @@ using UnityEngine;
 public class NavGrid : MonoBehaviour
 {
     public GameObject tilePrefab;
-    public Vector3Int dimensions = new Vector3Int(3,1,3);
-    public int TileCount { get { return dimensions.x * dimensions.y * dimensions.z; } }
+    public Vector2Int dimensions = new Vector2Int(3,3);
+    public int TileCount { get { return dimensions.x * dimensions.y; } }
 
     // row-major storage of tiles
     Tile[] tiles;
@@ -38,37 +38,32 @@ public class NavGrid : MonoBehaviour
     // 2D-style accessors
     //
 
-    // Get tile on a 2D grid (with layer specifying verticality) in grid-space
-    public Tile GetTile2D(int idx, int idz, int layer=0)
+    // Get tile on a 2D grid in grid-space
+    public Tile GetTile2D(int idx, int idz)
     {
-        return GetTile(dimensions.x * dimensions.z * layer + idx + dimensions.x * idz);
+        return GetTile(idx + dimensions.x * idz);
     }
 
-    // Get tile on a 2D grid (with idx.y specifying verticality) in grid-space
-    public Tile GetTile2D(Vector3Int idx)
+    // Get tile on a 2D grid in grid-space
+    public Tile GetTile2D(Vector2Int idx)
     {
-        return GetTile2D(idx.x, idx.z, idx.y);
+        return GetTile2D(idx.x, idx.y);
     }
 
     //
     // 3D-style accessors
     //
 
-    // Get tile on a 3D grid in grid-space
-    public Tile GetTile3D(int idx, int idy, int idz)
-    {
-        return GetTile(dimensions.x * dimensions.z * idy + idx + dimensions.x * idz);
-    }
-
     // Get the nearest cell on the grid given a world-space position
-    public Vector3Int GetNearestCellOnGrid(Vector3 point)
+    public Vector2Int GetNearestCellOnGrid(Vector3 point)
     {
-        Vector3Int cell = new Vector3Int();
-        for (int i = 0; i < 3; ++i)
-        {
-            point[i] = Mathf.Clamp(point[i], 0, dimensions[i]-1);
-            cell[i] = Mathf.RoundToInt(point[i]);
-        }
+        Vector2Int cell = new Vector2Int();
+
+        point.x = Mathf.Clamp(point.x, 0, dimensions.y - 1);
+        cell.x = Mathf.RoundToInt(point.x);
+
+        point.y = Mathf.Clamp(point.z, 0, dimensions.y - 1);
+        cell.y = Mathf.RoundToInt(point.z);
 
         return cell;
     }
@@ -77,12 +72,12 @@ public class NavGrid : MonoBehaviour
     {
         Vector3 tileDim = TileHalfDimensions;
 
-        tiles = new Tile[dimensions.x * dimensions.y * dimensions.z];
+        tiles = new Tile[dimensions.x * dimensions.y];
 
         // SPAWN TILES
 
         // row
-        for (int i = 0; i < dimensions.z; ++i)
+        for (int i = 0; i < dimensions.y; ++i)
         {
             // col
             for (int j = 0; j < dimensions.x; ++j)
@@ -104,13 +99,11 @@ public class NavGrid : MonoBehaviour
             }
         }
 
-        if(dimensions.y != 1) { Debug.LogWarning("Layering not yet possible"); }
-
         // MAKE CONNECTIONS
 
         for (int i = 0; i < dimensions.x; ++i)
         {
-            for (int j = 0; j < dimensions.z; ++j)
+            for (int j = 0; j < dimensions.y; ++j)
             {
                 var curTile = GetTile2D(i, j);
 
@@ -127,7 +120,7 @@ public class NavGrid : MonoBehaviour
                 }
 
                 // top?
-                if (j < dimensions.z - 1)
+                if (j < dimensions.y - 1)
                 {
                     curTile.connections.Add(GetTile2D(i, j + 1));
                 }
@@ -168,8 +161,8 @@ public class NavGrid : MonoBehaviour
     /// <returns>True if possible, otherwise false.</returns>
     public bool CalculatePath(Vector3 worldStart, Vector3 worldEnd, List<Vector3> path)
     {
-        Vector3Int startInt = GetNearestCellOnGrid(worldStart);
-        Vector3Int endInt = GetNearestCellOnGrid(worldEnd);
+        Vector2Int startInt = GetNearestCellOnGrid(worldStart);
+        Vector2Int endInt = GetNearestCellOnGrid(worldEnd);
 
         return CalculatePath(startInt, endInt, path);
     }
@@ -181,7 +174,7 @@ public class NavGrid : MonoBehaviour
     /// <param name="gridEnd">Ending grid position.</param>
     /// <param name="path">To be populated with the path, if possible. Must be non-null.</param>
     /// <returns>True if possible, otherwise false.</returns>
-    public bool CalculatePath(Vector3Int gridStart, Vector3Int gridEnd, List<Vector3> path)
+    public bool CalculatePath(Vector2Int gridStart, Vector2Int gridEnd, List<Vector3> path)
     {
         // create copies of each tile w/ metadata for pathfinding purposes
         TileRecord[] records = new TileRecord[TileCount];
@@ -267,8 +260,8 @@ public class NavGrid : MonoBehaviour
     /// <returns>True if possible, otherwise false.</returns>
     public bool CalculatePathAStar(Vector3 worldStart, Vector3 worldEnd, List<Vector3> path)
     {
-        Vector3Int startInt = GetNearestCellOnGrid(worldStart);
-        Vector3Int endInt = GetNearestCellOnGrid(worldEnd);
+        Vector2Int startInt = GetNearestCellOnGrid(worldStart);
+        Vector2Int endInt = GetNearestCellOnGrid(worldEnd);
 
         return CalculatePathAStar(startInt, endInt, path);
     }
@@ -280,7 +273,7 @@ public class NavGrid : MonoBehaviour
     /// <param name="gridEnd">Ending grid position.</param>
     /// <param name="path">To be populated with the path, if possible. Must be non-null.</param>
     /// <returns>True if possible, otherwise false.</returns>
-    public bool CalculatePathAStar(Vector3Int gridStart, Vector3Int gridEnd, List<Vector3> path)
+    public bool CalculatePathAStar(Vector2Int gridStart, Vector2Int gridEnd, List<Vector3> path)
     {
         // create copies of each tile w/ metadata for pathfinding purposes
         TileRecord[] records = new TileRecord[TileCount];
@@ -358,8 +351,8 @@ public class NavGrid : MonoBehaviour
         return true;
     }
 
-    private int ManhattanDistance(Vector3Int gridStart, Vector3Int gridEnd)
+    private int ManhattanDistance(Vector2Int gridStart, Vector2Int gridEnd)
     {
-        return Mathf.Abs(gridStart.x - gridEnd.x) + Mathf.Abs(gridStart.z - gridEnd.z); 
+        return Mathf.Abs(gridStart.x - gridEnd.x) + Mathf.Abs(gridStart.y - gridEnd.y); 
     }
 }

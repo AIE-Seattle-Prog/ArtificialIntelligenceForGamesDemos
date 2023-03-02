@@ -10,17 +10,14 @@ public class Tile : MonoBehaviour
     public int id;
     public NavGrid tileset;
 
-    public Vector3Int GridPosition
+    public Vector2Int GridPosition
     {
         get
         {
-            int y = id / tileset.dimensions.x * tileset.dimensions.z;
-            int layerLocalId = id - y * tileset.dimensions.x * tileset.dimensions.z;
+            int x = tileset.dimensions.x;
+            int z = tileset.dimensions.y;
 
-            int x = layerLocalId % tileset.dimensions.x;
-            int z = layerLocalId / tileset.dimensions.z;
-
-            return new Vector3Int(x, y, z);
+            return new Vector2Int(x, z);
         }
     }
 
