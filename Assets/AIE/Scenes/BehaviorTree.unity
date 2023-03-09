@@ -1226,12 +1226,12 @@ PrefabInstance:
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9995304
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.03064435
+      value: 0.000000011920929
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f,
         type: 3}
@@ -1342,11 +1342,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   headTransform: {fileID: 1357242588}
   motor: {fileID: 1507426267}
-  factionId: 0
+  factionId: 1
   visibilityMask:
     serializedVersion: 2
     m_Bits: 4294967294
   navAgentTypeID: 0
+  UseNavigation: 1
   patrolPoints:
   - {fileID: 1995418640}
   - {fileID: 1724281653}
@@ -1752,12 +1753,12 @@ PrefabInstance:
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9995304
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.03064435
+      value: 0.000000011920929
       objectReference: {fileID: 0}
     - target: {fileID: 2708507209894097061, guid: 79fe0865886bbc74b8000809fc3d1963,
         type: 3}
