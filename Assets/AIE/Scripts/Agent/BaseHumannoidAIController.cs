@@ -12,7 +12,7 @@ public class BaseHumanoidAIController : BaseHumanoidController
     [SerializeField]
     private int navAgentTypeID;
     private NavMeshPath navMeshPath;
-    private int curNavMeshPathIndex = -1;
+    protected int curNavMeshPathIndex = -1;
     private NavMeshQueryFilter navFilter;
 
     public Vector3 Destination
@@ -25,6 +25,7 @@ public class BaseHumanoidAIController : BaseHumanoidController
         }
     }
     public bool HasReachedDestination { get; private set; }
+    public bool UseNavigation = true;
 
     [Space]
     [SerializeField]
@@ -115,7 +116,8 @@ public class BaseHumanoidAIController : BaseHumanoidController
         }
 
         // pathfinding
-        if (navMeshPath.status != NavMeshPathStatus.PathInvalid &&
+        if (UseNavigation &&
+            navMeshPath.status != NavMeshPathStatus.PathInvalid &&
            curNavMeshPathIndex != -1 &&
            curNavMeshPathIndex != navMeshPath.corners.Length)
         {
